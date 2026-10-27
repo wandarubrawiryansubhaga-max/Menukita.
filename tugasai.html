@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>MenuKita - Rekomendasi Makanan Sehat</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#f6f8fb;--card:#fff;--tx:#14213d;--mu:#5b6b85;--ac:#1f6feb;--ok:#1a7f4b;--bd:#dde4ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1420;--card:#171f2f;--tx:#e8eefb;--mu:#9fb0cc;--ac:#5aa2ff;--ok:#4cc88a;--bd:#2a3550}}
+:root[data-theme="dark"]{--bg:#0e1420;--card:#171f2f;--tx:#e8eefb;--mu:#9fb0cc;--ac:#5aa2ff;--ok:#4cc88a;--bd:#2a3550}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,sans-serif}
+main{max-width:860px;margin:auto;padding:16px}h1{font-size:22px;margin:8px 0}h2{font-size:16px;margin:0 0 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin:12px 0}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+label{font-size:12px;color:var(--mu);display:block}input,select{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;box-sizing:border-box}
+button{background:var(--ac);color:#fff;border:0;border-radius:8px;padding:10px 18px;font:inherit;font-weight:600;cursor:pointer;margin-top:10px}
+.m{border-left:4px solid var(--ac);padding-left:10px;margin:8px 0}.mu{color:var(--mu);font-size:13px}.ok{color:var(--ok)}
+.tw{overflow-x:auto}code{font-size:12.5px}li{margin:3px 0}.fg{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}.fc{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;text-align:center;min-width:92px;font-size:13px}.em{font-size:40px;line-height:1.15}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:6px 8px;border-bottom:1px solid var(--bd);text-align:right}th:first-child,td:first-child{text-align:left}th{color:var(--mu);font-weight:600}tfoot td{font-weight:700;border-bottom:0}.bar{height:8px;border-radius:4px;background:var(--bd);overflow:hidden;margin-top:4px}.bar i{display:block;height:100%;background:var(--ac)}
+</style></head><body><main>
+<h1>🥗 MenuKita — Rekomendasi Menu Harian Sehat</h1>
+<div class="mu">KR yang dipakai: <b>Frame</b> (data makanan &amp; pengguna) + <b>Semantic Network</b> (is-a) + <b>Production Rules</b> (forward chaining)</div>
+<div class="card"><h2>Input Profil Pengguna</h2><div class="g">
+<div><label>Usia (tahun)</label><select id="usia"><option>18</option><option>19</option><option>20</option><option selected>21</option><option>22</option><option>23</option><option>24</option><option>25</option></select></div>
+<div><label>Aktivitas</label><select id="akt"><option>rendah</option><option selected>sedang</option><option>tinggi</option></select></div>
+<div><label>Preferensi makanan</label><select id="diet"><option value="omnivora">Omnivora</option><option value="vegetarian">Vegetarian</option></select></div>
+<div><label>Alergi</label><select id="alergi"><option value="">Tidak ada</option><option>kacang</option><option>ikan</option><option>telur</option><option>sayur</option><option>daging merah</option><option>nasi</option></select></div>
+<div><label>Tujuan</label><select id="tujuan"><option value="jaga">Jaga berat badan</option><option value="turun">Turunkan berat</option><option value="naik">Naikkan berat</option></select></div>
+<div><label>Budget per hari (Rp)</label><input id="budget" type="number" value="50000" step="1000"></div></div>
+<button onclick="run()">Dapatkan Rekomendasi</button></div>
+<div id="out"></div>
+<script>
+//ENGINE_START
+const FOODS=[
+{n:"Nasi putih",c:"karbo",k:200,p:4,h:3000,a:["nasi"],m:"SM"},
+{n:"Nasi merah",c:"karbo",k:150,p:3,h:4000,a:["nasi"],m:"SM"},
+{n:"Lontong",c:"karbo",k:150,p:3,h:3000,a:[],m:"PSM"},
+{n:"Bubur oat",c:"karbo",k:150,p:5,h:6000,a:[],m:"PS"},
+{n:"Perkedel kentang",c:"karbo",k:140,p:3,h:3500,a:[],g:1,m:"SM"},
+{n:"Tempe orek",c:"protein",s:"nabati",k:170,p:11,h:3500,a:[],m:"PSM"},
+{n:"Tempe goreng",c:"protein",s:"nabati",k:190,p:12,h:3000,a:[],g:1,m:"SM"},
+{n:"Tahu bacem",c:"protein",s:"nabati",k:110,p:9,h:3000,a:[],m:"PSM"},
+{n:"Kering tempe kacang",c:"protein",s:"nabati",k:210,p:10,h:4000,a:["kacang"],m:"PSM"},
+{n:"Telur dadar",c:"protein",s:"hewani",k:140,p:8,h:3000,a:["telur"],m:"PSM"},
+{n:"Telur balado",c:"protein",s:"hewani",k:150,p:8,h:3500,a:["telur"],m:"SM"},
+{n:"Ayam bakar bumbu kecap",c:"protein",s:"hewani",k:190,p:25,h:12000,a:[],m:"SM"},
+{n:"Ayam goreng kremes",c:"protein",s:"hewani",k:260,p:22,h:10000,a:[],g:1,m:"SM"},
+{n:"Pepes ikan kembung",c:"protein",s:"hewani",k:150,p:20,h:9000,a:["ikan"],m:"SM"},
+{n:"Semur daging sapi",c:"protein",s:"hewani",k:220,p:20,h:15000,a:["daging merah"],m:"SM"},
+{n:"Bakso sapi kuah",c:"protein",s:"hewani",k:200,p:14,h:12000,a:["daging merah"],m:"SM"},
+{n:"Tumis kangkung",c:"sayur",k:70,p:3,h:4000,a:["sayur"],m:"SM"},
+{n:"Sayur bening bayam",c:"sayur",k:40,p:3,h:3000,a:["sayur"],m:"SM"},
+{n:"Cah brokoli",c:"sayur",k:60,p:3,h:5000,a:["sayur"],m:"SM"},
+{n:"Sayur asem",c:"sayur",k:60,p:2,h:4000,a:["sayur"],m:"SM"},
+{n:"Pecel sayur",c:"sayur",k:180,p:7,h:8000,a:["kacang","sayur"],m:"SM"},
+{n:"Salad buah",c:"buah",k:100,p:1,h:5000,a:[],m:"PSM"},
+{n:"Jus jeruk tanpa gula",c:"buah",k:80,p:1,h:4000,a:[],m:"PSM"},
+{n:"Pisang kukus",c:"buah",k:100,p:1,h:2500,a:[],m:"PSM"}];
+// Semantic network: node -> parent (relasi is-a)
+const NET={protein_nabati:"protein",protein_hewani:"protein",protein:"makanan",karbo:"makanan",sayur:"makanan",buah:"makanan"};
+const par=f=>f.s?"protein_"+f.s:f.c;
+const EMO={"Nasi":"🍚","Lontong":"🍙","Bubur":"🥣","Perkedel":"🥔","Tempe":"🟫","Tahu":"🧊","Kering":"🥜","Telur":"🥚","Ayam":"🍗","Pepes":"🐟","Semur":"🥩","Bakso":"🍲","Tumis":"🥬","Sayur":"🥬","Cah":"🥦","Pecel":"🥗","Salad":"🍓","Jus":"🍊","Pisang":"🍌"};
+const emo=n=>{for(const k in EMO)if(n.startsWith(k))return EMO[k];return "🍽️"};
+const isa=(f,t)=>{let x=par(f);while(x){if(x===t)return true;x=NET[x]}return false};
+// Production rules (IF-THEN)
+const RULES=[
+{id:"R1",t:"IF vegetarian THEN hindari semua yang is-a protein_hewani",i:u=>u.diet==="vegetarian",d:s=>s.ban.push(f=>isa(f,"protein_hewani"))},
+{id:"R2",t:u=>"IF alergi="+u.alergi+" THEN hindari makanan beralergen "+u.alergi,i:u=>!!u.alergi,d:(s,u)=>s.ban.push(f=>f.a.includes(u.alergi))},
+{id:"R3",t:"IF tujuan=turun THEN target kalori -300 & utamakan rendah kalori",i:u=>u.tujuan==="turun",d:s=>{s.adj-=300;s.goal="low"}},
+{id:"R4",t:"IF tujuan=naik THEN target kalori +300 & utamakan tinggi kalori",i:u=>u.tujuan==="naik",d:s=>{s.adj+=300;s.goal="high"}},
+{id:"R5",t:"IF aktivitas=tinggi THEN kalori +400 & utamakan protein",i:u=>u.akt==="tinggi",d:s=>{s.adj+=400;s.prot=1}},
+{id:"R6",t:"IF aktivitas=rendah THEN kalori -200",i:u=>u.akt==="rendah",d:s=>{s.adj-=200}},
+{id:"R7",t:"IF usia 18-20 THEN kalori +100 (masa pertumbuhan akhir)",i:u=>u.usia<=20,d:s=>{s.adj+=100}}];
+function recommend(u){
+ const s={ban:[],adj:0,base:2000,goal:"",prot:0},fired=[];
+ let ch=true;while(ch){ch=false;for(const r of RULES)if(!fired.includes(r.id)&&r.i(u)){r.d(s,u);fired.push(r.id);ch=true}}
+ const trace=fired.map(id=>{const r=RULES.find(x=>x.id===id);return id+": "+(typeof r.t==="function"?r.t(u):r.t)});
+ const target=s.base+s.adj,ok=FOODS.filter(f=>!s.ban.some(b=>b(f)));
+ const plan={P:["karbo","protein","buah"],S:["karbo","protein","sayur"],M:["karbo","protein","sayur"]};
+ let res,fac=1,cw=1/2000;
+ for(let t=0;t<8;t++){const used=new Set();res={};
+  for(const m of "PSM"){res[m]=[];for(const c of plan[m]){
+   let cand=ok.filter(f=>f.c===c&&f.m.includes(m));if(!cand.length&&c==="sayur")cand=ok.filter(f=>f.c==="buah"&&f.m.includes(m));if(!cand.length)continue;
+   const sc=f=>(s.prot&&c==="protein"?f.p*.5:0)+(s.goal==="low"?-f.k*.05:0)+(s.goal==="high"?f.k*.03:0)-f.h*cw-(used.has(f.n)?3:0)+(c==="protein"?f.p*.1:0);
+   const b=cand.reduce((x,y)=>sc(y)>sc(x)?y:x);used.add(b.n);res[m].push(b)}}
+  const fl=Object.values(res).flat(),kk=fl.reduce((a,f)=>a+f.k,0);fac=Math.min(2.5,Math.max(.5,Math.round(target/kk*4)/4));
+  const tot=fl.reduce((a,f)=>a+f.h,0)*fac;if(tot<=u.budget)break;cw*=2.5}
+ for(const m in res)res[m]=res[m].map(f=>({...f,fac,pp:f.p,n:f.n+(fac!==1?" ("+fac+"x porsi)":""),k:Math.round(f.k*fac),p:Math.round(f.p*fac),h:Math.round(f.h*fac)}));
+ const all=Object.values(res).flat(),sum=k=>all.reduce((a,f)=>a+f[k],0);
+ return{res,trace,target,kal:sum("k"),prot:sum("p"),harga:sum("h"),skipped:FOODS.length-ok.length}}
+//ENGINE_END
+const NM={P:"Sarapan",S:"Makan siang",M:"Makan malam"},rp=n=>"Rp"+n.toLocaleString("id-ID");
+function run(){const g=i=>document.getElementById(i).value;
+ const u={usia:+g("usia"),akt:g("akt"),diet:g("diet"),alergi:g("alergi"),tujuan:g("tujuan"),budget:+g("budget")};
+ const r=recommend(u);let h='<div class="card"><h2>Menu Harian</h2>';
+ for(const m of "PSM")h+=`<div class="m"><b>${NM[m]}</b><br>${r.res[m].map(f=>f.n).join(" + ")}<div class="mu">${r.res[m].reduce((a,f)=>a+f.k,0)} kkal · protein ${r.res[m].reduce((a,f)=>a+f.p,0)} g · ${rp(r.res[m].reduce((a,f)=>a+f.h,0))}</div></div>`;
+ const okb=r.harga<=u.budget;
+ h+=`<p><b>Total:</b> ${r.kal} kkal (target ±${r.target}) · protein ${r.prot} g · <span class="${okb?'ok':''}">${rp(r.harga)} ${okb?'✓ sesuai budget':'(melebihi budget, data terbatas)'}</span></p></div>`;
+ const tp=r.prot||1;
+ h+=`<div class="card"><h2>Rincian Protein</h2><div class="tw"><table><thead><tr><th>Makanan</th><th>Porsi</th><th>Protein/porsi</th><th>Protein total</th></tr></thead><tbody>`;
+ for(const m of "PSM"){const mp=r.res[m].reduce((a,f)=>a+f.p,0);
+  h+=`<tr><td colspan="4" style="text-align:left;padding-top:10px"><b>${NM[m]}</b> <span class="mu">· ${mp} g (${Math.round(mp/tp*100)}% dari total harian)</span><div class="bar"><i style="width:${mp/tp*100}%"></i></div></td></tr>`;
+  h+=r.res[m].map(f=>`<tr><td>${f.n.replace(/ \(.*porsi\)/,"")}</td><td>${f.fac}x</td><td>${f.pp} g</td><td>${f.p} g</td></tr>`).join("")}
+ h+=`</tbody><tfoot><tr><td colspan="3">Total protein per hari</td><td>${r.prot} g</td></tr></tfoot></table></div><div class="mu">Protein/porsi = per 1 porsi standar. Protein total = protein/porsi × jumlah porsi.</div></div>`;
+ h+=`<div class="card"><h2>Penjelasan (rule yang aktif)</h2><ul>${r.trace.length?r.trace.map(t=>"<li><code>"+t+"</code></li>").join(""):"<li>Tidak ada rule khusus; menu seimbang standar.</li>"}</ul><div class="mu">${r.skipped} dari ${FOODS.length} makanan dikeluarkan oleh rule. Inferensi memakai Semantic Network (is-a): tempe → protein_nabati → protein → makanan.</div></div>`;
+ h+=`<div class="card"><h2>Frame Pengguna</h2><div class="tw"><code>${JSON.stringify(u)}</code></div></div>`;
+ document.getElementById("out").innerHTML=h}
+run();
+</script></main></body></html>
